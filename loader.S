@@ -136,6 +136,21 @@ __ftol:
     ret
 
 fix_fseek:
+    ; Fseek needs to be written like this because of the Windows'
+    ; implementation's little quirk. According to fseek(3):
+    ; > A successful call to the fseek() function clears the end-of-file
+    ; > indicator for the stream and undoes any effects of the ungetc(3)
+    ; > function on the same stream.
+    ; The Sony code seeks to the end of file using fseek, but because of
+    ; the behavior of fseek, it's impossible to check if the stream is at EOF
+    ; after seeking. The Windows implementation seems to set the 0x10 bit
+    ; in the FILE*'s flags variable if the stream is at EOF, even after
+    ; running fseek(). Sony used that as a condition in a loop.
+    ; The Linux implementation does not reflect that behavior (FILE* is an
+    ; opaque struct. Its flags shouldn't be examined by any userland program.
+    ; EOF should be checked using a feof() call instead).
+    ;
+    ; This function replicates Windows' implementation's behavior
     push ebx
     push edx
     ; File size now on stack
