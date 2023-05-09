@@ -10,7 +10,7 @@ To run this, you need to:
 \*To do this on Ubuntu, execute the following commands:
 ```
 # dpkg --add-architecture i386
-# sudo apt update
-# sudo apt install libc6:i386 libc6-dev:i386
+# apt update
+# apt install libc6:i386 libc6-dev:i386
 ```
 
