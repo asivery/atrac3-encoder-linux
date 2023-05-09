@@ -1,6 +1,16 @@
 #!/bin/bash
 
 FILE="psp_at3tool.exe"
+VALID_SHA="823199113c59ffcd3fc3e1855dbb88a9cd44d29e82e7a7cfc42e8c92f2a61341"
+
+shasum=$(sha256sum $FILE | awk '{print($1);}')
+
+if [ $shasum != $VALID_SHA ]
+then
+    echo "SHA sum mismatch! You have the wrong encoder"
+    echo "$shasum != $VALID_SHA"
+    exit 1
+fi
 
 function getsize(){
     echo $((16#$(objdump -h $FILE | grep -F $1 | head -1 | awk '{print($3)}')))
