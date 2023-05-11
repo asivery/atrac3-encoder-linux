@@ -56,7 +56,6 @@ _repair_stack:
     jmp _start.call_main
 
 entry: dd 0x004012f0
-text: db "_start hook called. ESP", 13, 13, 0
 
 section .redir
 _fix_fseek_redir_0: ;MSVCR71.DLL::fseek
