@@ -50,12 +50,11 @@ _start:
     int 0x80
 
 _repair_stack:
-    and eax, 0xfffff
-    add eax, 1
-    sub esp, eax
+    mov esp, 0xffefffff
     jmp _start.call_main
 
 entry: dd 0x004012f0
+
 
 section .redir
 _fix_fseek_redir_0: ;MSVCR71.DLL::fseek
