@@ -23,27 +23,44 @@ extern printf
 extern pow
 extern asin
 
+; The Windows code seems to trip up if the stack is greater than 0xfff00000
+; The _repair_stack method triggers only when that condition is met, and
+; sets the stack pointer to $esp - ($esp & ~0xfff00000) - 1
+; Because the x86 stack grows downwards, this is equal to allocating a bunch
+; garbage data on the stack.
+
 _start:
-    mov eax, dword [esp]      ; argc
+    mov ecx, dword [esp]      ; argc
     mov ebx, esp              ; argv
     add ebx, 4
     
+    mov eax, esp
+    cmp eax, 0xfff00000
+    jnl _repair_stack
+
+.call_main:
     push ebx
-    push eax
+    push ecx
     
-    mov esi, dword [entry]
-    call esi
+    mov eax, dword [entry]
+    call eax
     
     mov ebx, 0
     mov eax,1
     int 0x80
 
-entry: dd 0x004012f0
+_repair_stack:
+    and eax, 0xfffff
+    add eax, 1
+    sub esp, eax
+    jmp _start.call_main
 
+entry: dd 0x004012f0
+text: db "_start hook called. ESP", 13, 13, 0
 
 section .redir
 _fix_fseek_redir_0: ;MSVCR71.DLL::fseek
-jmp fix_fseek
+jmp fseek wrt ..plt
 _fwrite_redir_1: ;MSVCR71.DLL::fwrite
 jmp fwrite wrt ..plt
 _free_redir_2: ;MSVCR71.DLL::free
@@ -134,81 +151,3 @@ __ftol:
     mov     eax, dword [esp-12]
     mov     edx, dword [esp-8]
     ret
-
-fix_fseek:
-    ; Fseek needs to be written like this because of the Windows'
-    ; implementation's little quirk. According to fseek(3):
-    ; > A successful call to the fseek() function clears the end-of-file
-    ; > indicator for the stream and undoes any effects of the ungetc(3)
-    ; > function on the same stream.
-    ; The Sony code seeks to the end of file using fseek, but because of
-    ; the behavior of fseek, it's impossible to check if the stream is at EOF
-    ; after seeking. The Windows implementation seems to set the 0x10 bit
-    ; in the FILE*'s flags variable if the stream is at EOF, even after
-    ; running fseek(). Sony used that as a condition in a loop.
-    ; The Linux implementation does not reflect that behavior (FILE* is an
-    ; opaque struct. Its flags shouldn't be examined by any userland program.
-    ; EOF should be checked using a feof() call instead).
-    ;
-    ; This function replicates Windows' implementation's behavior
-    push ebx
-    push edx
-    ; File size now on stack
-    ; Args are now shifted by 8, because of the pushes above
-    mov eax, dword [esp + 0xc]
-    mov ebx, dword [esp + 0x10]
-    mov edx, dword [esp + 0x14]
-    push edx
-    push ebx
-    push eax
-    call fseek wrt ..plt
-    add esp, 0xc
-    pop edx
-    ; File is now at the correct position
-    ; Call ftell - get total file size
-    mov eax, dword [esp + 8]
-    push eax
-    call ftell wrt ..plt
-    add esp, 0x4
-    push eax
-    ; Our new file position is on the stack
-    ; Seek to the file end, check the position, args offset by 4
-    mov eax, dword [esp + 0xc]
-    push 0x2
-    push 0x0
-    push eax
-    call fseek wrt ..plt
-    add esp, 0xc
-    ; Run ftell again
-    ; args offset by 4
-    mov eax, dword [esp + 0xc]
-    push eax
-    call ftell wrt ..plt
-    add esp, 0x4
-    ; Now the file size is in eax
-    pop ebx
-    push ebx
-    push eax
-    ; Seek again, to the correct position
-    mov eax, dword [esp + 0x10]
-    push 0x0
-    push ebx
-    push eax
-    call fseek wrt ..plt
-    add esp, 0xc
-    
-    ; Now at the correct position, ready to return
-    ; Compare and set the flags adequately
-    pop eax
-    pop ebx
-    cmp eax, ebx
-    jne .ret
-    
-    ; We're at EOF. Update the FILE*'s flags
-    mov eax, dword [esp + 8]
-    or dword [eax], 0x10
-    
-    .ret:
-      pop ebx
-      mov eax, 0
-      ret
