@@ -114,7 +114,7 @@ index ec7789c..676f2c2 100644
 +BYTE(0x0)
 +BYTE(0x61)
 +BYTE(0x0)
-+/* MSVCR71.DLL::_ftol => _stub (0x610020) */
++/* MSVCR71.DLL::_ftol => _ftol (0x610020) */
  BYTE(0x20)
 -BYTE(0xC9)
 -BYTE(0x0B)
@@ -134,13 +134,13 @@ index ec7789c..676f2c2 100644
 +BYTE(0x0)
 +BYTE(0x61)
 +BYTE(0x0)
-+/* MSVCR71.DLL::floor => floor (0x610022) */
-+BYTE(0x22)
++/* MSVCR71.DLL::floor => floor (0x610025) */
++BYTE(0x25)
 +BYTE(0x0)
 +BYTE(0x61)
 +BYTE(0x0)
-+/* MSVCR71.DLL::_CIpow => pow (0x610027) */
-+BYTE(0x27)
++/* MSVCR71.DLL::_CIpow => pow (0x61002a) */
++BYTE(0x2a)
 +BYTE(0x0)
 +BYTE(0x61)
 +BYTE(0x0)

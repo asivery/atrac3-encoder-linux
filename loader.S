@@ -71,18 +71,18 @@ __stub_redir_5: ;MSVCR71.DLL::_iob
 jmp _stub
 _memmove_redir_6: ;MSVCR71.DLL::memmove
 jmp memmove wrt ..plt
-__stub_redir_7: ;MSVCR71.DLL::_ftol
+__ftol_redir_7: ;MSVCR71.DLL::_ftol
 jmp __ftol
 _floor_redir_8: ;MSVCR71.DLL::floor
 jmp floor wrt ..plt
 _pow_redir_9: ;MSVCR71.DLL::_CIpow
-jmp pow wrt ..plt
+jmp cipow
 _memcpy_redir_10: ;MSVCR71.DLL::memcpy
 jmp memcpy wrt ..plt
 _calloc_redir_11: ;MSVCR71.DLL::calloc
 jmp calloc wrt ..plt
 _asin_redir_12: ;MSVCR71.DLL::_CIasin
-jmp asin wrt ..plt
+jmp ciasin
 __stub_redir_13: ;MSVCR71.DLL::__security_error_handler
 jmp _stub
 __stub_redir_14: ;MSVCR71.DLL::_except_handler3
@@ -137,6 +137,71 @@ _printf_redir_38: ;MSVCR71.DLL::printf
 jmp printf wrt ..plt
 
 _stub: ret
+
+cipow:
+    push ebp
+    mov ebp, esp
+    sub esp, 68
+    fstp qword [esp + 8]
+    fwait
+    fstp qword [esp]
+    fwait
+    mov ecx, 2
+    .1:
+    fxam
+    fstsw ax
+    and ax, 0x4500
+    cmp ax, 0x4100
+    je .2
+    fstp qword [esp + ecx * 8]
+    fwait
+    inc ecx
+    jmp .1
+    .2:
+    mov dword [ebp - 4], ecx
+    call pow wrt ..plt
+    mov ecx, [ebp - 4]
+    fstp qword [esp + 8]
+    .3:
+    dec ecx
+    fld qword [esp + ecx * 8]
+    cmp ecx, 1
+    jne .3
+    leave
+    ret
+
+    ciasin:
+    push ebp
+    mov ebp, esp
+    sub esp, 68
+    fstp qword [esp + 8]
+    fwait
+    fstp qword [esp]
+    fwait
+    mov ecx, 2
+    .1:
+    fxam
+    fstsw ax
+    and ax, 0x4500
+    cmp ax, 0x4100
+    je .2
+    fstp qword [esp + ecx * 8]
+    fwait
+    inc ecx
+    jmp .1
+    .2:
+    mov dword [ebp - 4], ecx
+    call asin wrt ..plt
+    mov ecx, [ebp - 4]
+    fstp qword [esp + 8]
+    .3:
+    dec ecx
+    fld qword [esp + ecx * 8]
+    cmp ecx, 1
+    jne .3
+    leave
+    ret
+
 
 __ftol:
     fnstcw  word [esp-2]
